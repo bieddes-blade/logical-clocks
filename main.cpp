@@ -10,6 +10,8 @@
 
 #include <thread>
 #include <chrono>
+#include <mutex>
+#include <condition_variable>
 
 
 int NUM_THREADS = 2;
@@ -50,13 +52,55 @@ public:
 };
 
 
+template<typename T>
+class ThreadsafeQueue {
+    std::queue<T> queue_;
+    mutable std::mutex mutex_;
+    bool empty() const {
+        return queue_.empty();
+    }
+
+ public:
+    ThreadsafeQueue() = default;
+    ThreadsafeQueue(const ThreadsafeQueue<T> &) = delete ;
+    ThreadsafeQueue& operator=(const ThreadsafeQueue<T> &) = delete ;
+ 
+    ThreadsafeQueue(ThreadsafeQueue<T>&& other) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        queue_ = std::move(other.queue_);
+    }
+
+    virtual ~ThreadsafeQueue() { }
+
+    unsigned long size() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return queue_.size();
+    }
+
+    std::optional<T> pop() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (queue_.empty()) {
+            return {};
+        }
+        T tmp = queue_.front();
+        queue_.pop();
+        return tmp;
+    }
+
+    void push(const T &item) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        queue_.push(item);
+    }
+};
+
+
 class Process {
 public:
     int my_id;
     bool asking_for_resource = false;
     int writes = NUM_WRITES; // how many times this process will write into the resource
     Resource& resource;
-    std::map<int, std::queue<Message>>& queue;
+    std::map<int, ThreadsafeQueue<Message>>& queue;
     int clock = 0;
 
     std::map<int, int> sent_count; // how many messages this process has sent
@@ -80,7 +124,7 @@ public:
     };
     std::map<int, std::set<Message, cmp_number>> backlog; // messages that were received in the wrong order
 
-    Process(int my_id_, Resource& resource_, std::map<int, std::queue<Message>>& queue_) 
+    Process(int my_id_, Resource& resource_, std::map<int, ThreadsafeQueue<Message>>& queue_) 
         : my_id(my_id_), resource(resource_), queue(queue_) {}
 
     bool backlog_not_empty() {
@@ -142,8 +186,12 @@ public:
     }
 
     void receive_new_messages() {
-        while (!queue[my_id].empty()) {
-            Message message = queue[my_id].front();
+        sleep(20);
+
+        std::optional<Message> optional_message = queue[my_id].pop();
+        while (optional_message) {
+            Message message = *optional_message;
+
             int sender = message.from;
 
             std::cout << "Thread " + std::to_string(my_id) + " received message type " + std::to_string(message.type) + " from " + 
@@ -178,7 +226,12 @@ public:
                     }
                 }
             }
-            queue[my_id].pop();
+
+            optional_message = queue[my_id].pop();
+            if (!optional_message) {
+                sleep(50);
+                optional_message = queue[my_id].pop();
+            }
         }
     }
 
@@ -237,7 +290,7 @@ public:
 };
 
 
-void create_process(int id, Resource& resource, std::map<int, std::queue<Message>>& queue) {
+void create_process(int id, Resource& resource, std::map<int, ThreadsafeQueue<Message>>& queue) {
     Process process(id, resource, queue);
     process.loop();
 }
@@ -246,7 +299,7 @@ void create_process(int id, Resource& resource, std::map<int, std::queue<Message
 int main() {
     std::srand(std::time(nullptr));
     Resource resource;
-    std::map<int, std::queue<Message>> queue;
+    std::map<int, ThreadsafeQueue<Message>> queue;
     std::vector<std::thread> threads;
 
     for (int i = 0; i < NUM_THREADS; ++i) {
