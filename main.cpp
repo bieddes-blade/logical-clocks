@@ -1,6 +1,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cstdlib>
+#include <string>
 
 #include <vector>
 #include <map>
@@ -38,7 +39,7 @@ public:
 
     void increment() {
         /*if (in_use == true) {
-            std::cout << "Race condition" << "\n";
+            std::cout << "Race condition\n";
         }*/
 
         in_use = true;
@@ -57,11 +58,16 @@ public:
     Resource& resource;
     std::map<int, std::queue<Message>>& queue;
     int clock = 0;
+
     std::map<int, int> sent_count; // how many messages this process has sent
     std::map<int, int> processed_count; // how many messages this process has received in the right order
     std::map<int, int> max_timestamp; // max timestamp of a received message
+
     struct cmp_timestamp {
         bool operator() (const Message& a, const Message& b) const {
+            if (a.timestamp == b.timestamp) {
+                return a.from < b.from;
+            }
             return a.timestamp < b.timestamp;
         }
     };
@@ -77,11 +83,21 @@ public:
     Process(int my_id_, Resource& resource_, std::map<int, std::queue<Message>>& queue_) 
         : my_id(my_id_), resource(resource_), queue(queue_) {}
 
+    bool backlog_not_empty() {
+        for (int i = 0; i < NUM_THREADS; ++i) {
+            if (!backlog[i].empty()) {
+                Message m = *backlog[i].begin();
+                return true;
+            }
+        }
+        return false;
+    }
+
     void loop() {
-        while ((writes > 0) || (backlog.size() > 0)) {
+        while ((writes > 0) || (backlog_not_empty())) {
+            // if there are messages in the backlog, not every request has been processed
             int random_value = std::rand() % 10;
-            if ((random_value == 0) && (!asking_for_resource)) {
-                ++clock;
+            if ((writes > 0) && (random_value == 0) && (!asking_for_resource)) {
                 asking_for_resource = true;
                 request_resource();
             }
@@ -99,6 +115,9 @@ public:
             ++sent_count[other_id];
         }
         queue[other_id].push(Message(my_id, sent_count[other_id], clock, type));
+        std::cout << "Thread " + std::to_string(my_id) + " sent message type " + std::to_string(type) + " to " + 
+            std::to_string(other_id) + " at " + std::to_string(clock) + "\n";
+        ++clock;
     }
 
     void process_message(Message message) {
@@ -107,17 +126,16 @@ public:
         max_timestamp[sender] = std::max(max_timestamp[sender], message.timestamp);
         clock = std::max(clock, message.timestamp + 1);
 
-        if (message.type == 1) {
+        if (message.type == 1) { // processing a request resource message
             requests.insert(message);
             send_message(sender, 3); // send acknowledgement message to sender
         } else if (message.type == 2) {
-            for (auto it = requests.begin(); it != requests.end(); ) {
+            // erase one previous request resource message from the sender
+            for (auto it = requests.begin(); it != requests.end(); ++it) {
                 Message current = *it;
-                // erase all previous resource requests from the sender
                 if ((current.from == sender) && (current.timestamp <= message.timestamp) && (current.type == 1)) {
-                    it = requests.erase(it);
-                } else {
-                    ++it;
+                    requests.erase(it);
+                    break;
                 }
             }
         }
@@ -128,6 +146,9 @@ public:
             Message message = queue[my_id].front();
             int sender = message.from;
 
+            std::cout << "Thread " + std::to_string(my_id) + " received message type " + std::to_string(message.type) + " from " + 
+                std::to_string(sender) + " at " + std::to_string(clock) + "\n";
+
             // if this is the first received message from sender
             if (processed_count.find(sender) == processed_count.end()) {
                 processed_count[sender] = 0;
@@ -137,17 +158,20 @@ public:
             if (message.number > processed_count[sender] + 1) {
                 // the previous messages from this sender weren't received yet
                 backlog[sender].insert(message);
+                std::cout << "Thread " + std::to_string(my_id) + " placed message from " + std::to_string(sender) + " at " + 
+                    std::to_string(clock) + " into the backlog\n";
             } else {
                 // the number of this message == (the number of the last processed message + 1)
                 process_message(message);
 
-                // lets go through the messages received in the wrong order and check if
-                // any can be processed now
+                // lets go through the messages received in the wrong order and check if any can be processed now
                 for (auto it = backlog[sender].begin(); it != backlog[sender].end(); ) {
                     Message current = *it;
                     if (current.number == processed_count[sender] + 1) {
                         // found next consecutive message
                         process_message(current);
+                        std::cout << "Thread " + std::to_string(my_id) + " processed message from " + std::to_string(current.from) +  
+                            " at " + std::to_string(current.timestamp) + " from the backlog\n";
                         it = backlog[sender].erase(it);
                     } else {
                         ++it;
@@ -159,26 +183,25 @@ public:
     }
 
     void request_resource() {
+        requests.insert(Message(my_id, -1, clock, 1));
         for (int i = 0; i < NUM_THREADS; ++i) {
             if (i != my_id) {
                 send_message(i, 1);
             }
         }
-        requests.insert(Message(my_id, -1, clock, 1));
         ++clock;
     }
 
     void check_if_access_granted() {
-        if (requests.size() != 0) {
-            Message min_message = *requests.begin();
-            if (min_message.from != my_id) {
-                return;
-            }
-        } else {
+        if ((requests.size() == 0) || (max_timestamp.size() == 0)) { // change for NUM_THREADS == 1
+            return;
+        }
+        Message min_message = *requests.begin();
+        if (min_message.from != my_id) {
             return;
         }
         for (auto it = max_timestamp.begin(); it != max_timestamp.end(); ++it) {
-            if (it->second < clock) {
+            if ((it->first != my_id) && (it->second <= min_message.timestamp)) {
                 return;
             }
         }
@@ -186,21 +209,23 @@ public:
     }
 
     void access_granted() {
+        std::cout << "The resource was granted to thread " + std::to_string(my_id) + " at " + std::to_string(clock) + "\n";
         resource.increment();
         --writes;
         release_resource();
     }
 
     void release_resource() {
-        for (auto it = requests.begin(); it != requests.end(); ) {
+        std::cout << "The resource was released from thread " + std::to_string(my_id) + " at " + std::to_string(clock) + "\n";
+        // erase one previous resource request message from this process
+        for (auto it = requests.begin(); it != requests.end(); ++it) {
             Message current = *it;
-            // erase all previous resource requests from this process
             if ((current.from == my_id) && (current.timestamp <= clock) && (current.type == 1)) {
-                it = requests.erase(it);
-            } else {
-                ++it;
+                requests.erase(it);
+                break;
             }
         }
+        // send all other processes a release resource message
         for (int i = 0; i < NUM_THREADS; ++i) {
             if (i != my_id) {
                 send_message(i, 2);
