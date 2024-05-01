@@ -6,6 +6,6 @@
 
 ## Algorithm
 
-Time, Clocks, and the Ordering of Events in a Distributed system https://lamport.azurewebsites.net/pubs/time-clocks.pdf
+Time, Clocks, and the Ordering of Events in a Distributed System https://lamport.azurewebsites.net/pubs/time-clocks.pdf
 
 Used a safe queue class from this repository https://github.com/K-Adam/SafeQueue/tree/master
