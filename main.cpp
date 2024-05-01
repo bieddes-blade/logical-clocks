@@ -13,7 +13,7 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "SafeQueue.hpp"
+#include "safe_queue.hpp"
 
 
 int NUM_THREADS = 3;
