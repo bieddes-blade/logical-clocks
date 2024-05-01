@@ -40,10 +40,6 @@ public:
     bool in_use = false;
 
     void increment() {
-        /*if (in_use == true) {
-            std::cout << "Race condition\n";
-        }*/
-
         in_use = true;
         sleep(200);
         ++number; // no mutex here
@@ -158,7 +154,11 @@ public:
         } else {
             ++sent_count[other_id];
         }
+        int sz = queue[other_id].size();
         queue[other_id].push(Message(my_id, sent_count[other_id], clock, type));
+        if (queue[other_id].size() <= sz) {
+            std::cout << "WTF\n";
+        }
         std::cout << "Thread " + std::to_string(my_id) + " sent message type " + std::to_string(type) + " to " + 
             std::to_string(other_id) + " at " + std::to_string(clock) + "\n";
         ++clock;
@@ -168,7 +168,6 @@ public:
         int sender = message.from;
         ++processed_count[sender];
         max_timestamp[sender] = std::max(max_timestamp[sender], message.timestamp);
-        clock = std::max(clock, message.timestamp + 1);
 
         if (message.type == 1) { // processing a request resource message
             requests.insert(message);
@@ -193,6 +192,7 @@ public:
             Message message = *optional_message;
 
             int sender = message.from;
+            clock = std::max(clock + 1, message.timestamp + 1);
 
             std::cout << "Thread " + std::to_string(my_id) + " received message type " + std::to_string(message.type) + " from " + 
                 std::to_string(sender) + " at " + std::to_string(clock) + "\n";
@@ -265,6 +265,7 @@ public:
         std::cout << "The resource was granted to thread " + std::to_string(my_id) + " at " + std::to_string(clock) + "\n";
         resource.increment();
         --writes;
+        ++clock;
         release_resource();
     }
 
