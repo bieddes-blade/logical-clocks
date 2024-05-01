@@ -17,7 +17,14 @@
 
 
 int NUM_THREADS = 3;
-int NUM_WRITES = 3;
+int NUM_WRITES = 1;
+
+
+std::map<int, std::string> WORDS = {
+    { 1, "REQUEST" },
+    { 2, "RELEASE" },
+    { 3, "ACK" }
+};
 
 
 void sleep(int ms) {
@@ -42,7 +49,10 @@ public:
     int number = 0;
     bool in_use = false;
 
-    void increment() {
+    void increment(int my_id) {
+        if (in_use) {
+            std::cout << "RACE CONDITION, thread " + std::to_string(my_id) + " tring to access resource\n";
+        }
         in_use = true;
         sleep(200);
         ++number; // no mutex here
@@ -87,7 +97,6 @@ public:
     bool backlog_not_empty() {
         for (int i = 0; i < NUM_THREADS; ++i) {
             if (!backlog[i].empty()) {
-                Message m = *backlog[i].begin();
                 return true;
             }
         }
@@ -121,7 +130,7 @@ public:
         Message new_message = Message(my_id, sent_count[other_id], clock, type);
         queue[other_id].Produce(std::move(new_message));
 
-        std::cout << "Thread " + std::to_string(my_id) + " sent message type " + std::to_string(type) + " to " + 
+        std::cout << "Thread " + std::to_string(my_id) + " sent " + WORDS[type] + " to " + 
             std::to_string(other_id) + " at " + std::to_string(clock) + "\n";
         ++clock;
     }
@@ -153,8 +162,8 @@ public:
             int sender = message.from;
             clock = std::max(clock + 1, message.timestamp + 1);
 
-            std::cout << "Thread " + std::to_string(my_id) + " received message type " + std::to_string(message.type) + " from " + 
-                std::to_string(sender) + " at " + std::to_string(clock) + "\n";
+            std::cout << "Thread " + std::to_string(my_id) + " received " + WORDS[message.type] +
+                " from " + std::to_string(sender) + " at " + std::to_string(clock) + "\n";
 
             // if this is the first received message from sender
             if (processed_count.find(sender) == processed_count.end()) {
@@ -192,15 +201,15 @@ public:
     }
 
     void access_granted() {
-        std::cout << "The resource was granted to thread " + std::to_string(my_id) + " at " + std::to_string(clock) + "\n";
-        resource.increment();
+        std::cout << "  Resource was granted to thread " + std::to_string(my_id) + " at " + std::to_string(clock) + "\n";
+        resource.increment(my_id);
         --writes;
         ++clock;
         release_resource();
     }
 
     void release_resource() {
-        std::cout << "The resource was released from thread " + std::to_string(my_id) + " at " + std::to_string(clock) + "\n";
+        std::cout << "  Resource was released from thread " + std::to_string(my_id) + " at " + std::to_string(clock) + "\n";
         // erase one previous resource request message from this process
         for (auto it = requests.begin(); it != requests.end(); ++it) {
             Message current = *it;
