@@ -16,8 +16,8 @@
 #include "safe_queue.hpp"
 
 
-int NUM_THREADS = 3;
-int NUM_WRITES = 1;
+int NUM_THREADS = 5;
+int NUM_WRITES = 3;
 
 
 std::map<int, std::string> WORDS = {
@@ -37,7 +37,7 @@ public:
     int from;
     int number;
     int timestamp;
-    int type; // 1 == request resource, 2 == release resource, 3 == acknowledgement
+    int type;
     Message() : from(-1), number(-1), timestamp(-1), type(-1) {}
     Message(int from_, int number_, int timestamp_, int type_)
         : from(from_), number(number_), timestamp(timestamp_), type(type_) {}
@@ -51,7 +51,7 @@ public:
 
     void increment(int my_id) {
         if (in_use) {
-            std::cout << "RACE CONDITION, thread " + std::to_string(my_id) + " tring to access resource\n";
+            std::cout << "RACE CONDITION, thread " + std::to_string(my_id) + " trying to access resource\n";
         }
         in_use = true;
         sleep(200);
@@ -132,7 +132,6 @@ public:
 
         std::cout << "Thread " + std::to_string(my_id) + " sent " + WORDS[type] + " to " + 
             std::to_string(other_id) + " at " + std::to_string(clock) + "\n";
-        ++clock;
     }
 
     void process_message(Message message) {
@@ -175,7 +174,8 @@ public:
     }
 
     void request_resource() {
-        requests.insert(Message(my_id, -1, clock, 1));
+        Message new_message = Message(my_id, -1, clock, 1);
+        requests.insert(new_message);
         for (int i = 0; i < NUM_THREADS; ++i) {
             if (i != my_id) {
                 send_message(i, 1);
