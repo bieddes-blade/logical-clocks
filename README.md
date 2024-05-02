@@ -12,6 +12,8 @@ We wish to find an algorithm for granting the resource to a process which satisf
 2. Different requests for the resource must be granted in the order in which they are made.
 3. If every process which is granted the resource eventually releases it, then every request is eventually granted.
 
+We assume that for any two processes P_i and P_j, the messages sent from P_i to P_j are received in the same order as they are sent. Moreover, we assume that every message is eventually received. In the future, I will add a message backlog to this implementation to avoid the need for the following assumptions.
+
 ## How to run it?
 
 ```
@@ -37,6 +39,8 @@ Thread 0 received ACK from 1 at 5
 Thread 0 sent RELEASE to 1 at 6
 Thread 1 received RELEASE from 0 at 7
 ```
+
+The variable ```NUM_THREADS``` refers to the number of processes competing for the resource; the variable ```NUM_WRITES``` refers to the number of times these processes will try to update the value of the resource. The last line of the output should be a number equal to ```NUM_THREADS * NUM_WRITES```. In case of a race condition, a warning will be printed into the output.
 
 ## Acknowledgements
 
