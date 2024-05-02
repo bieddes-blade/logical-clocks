@@ -12,10 +12,6 @@ We wish to find an algorithm for granting the resource to a process which satisf
 2. Different requests for the resource must be granted in the order in which they are made.
 3. If every process which is granted the resource eventually releases it, then every request is eventually granted.
 
-## Algorithm
-
-
-
 ## How to run it?
 
 ```
@@ -24,6 +20,8 @@ g++ -std=c++17 threads.cpp -o threads
 ```
 
 ## How to read the output?
+
+The threads send three types of messages to each other: REQUEST, RELEASE and ACK. The last number in each event description is the timestamp of that event. These timestamps and a rule for breaking ties are enough to create a total ordering of events in the system. Each thread maintains its own logical clock and updates its value after certain events, such as sending all other threads a message (```++clock```) or receiveing a message from another thread (```clock = max(clock + 1, message.timestamp + 1)```).
 
 ```
 Thread 0 sent REQUEST to 2 at 0
