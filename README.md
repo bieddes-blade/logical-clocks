@@ -12,7 +12,7 @@ We wish to find an algorithm for granting the resource to a process which satisf
 2. Different requests for the resource must be granted in the order in which they are made.
 3. If every process which is granted the resource eventually releases it, then every request is eventually granted.
 
-We assume that for any two processes P<sub>i</sub> and P<sub>j</sub> , the messages sent from P<sub>i</sub> to P<sub>j</sub> are received in the same order as they are sent. Moreover, we assume that every message is eventually received. In the future, I will add a message backlog to this implementation to avoid the need for the following assumptions.
+We assume that for any two processes P<sub>i</sub> and P<sub>j</sub> , the messages sent from P<sub>i</sub> to P<sub>j</sub> are received in the same order as they are sent. Moreover, we assume that every message is eventually received. In the future, I will add a message backlog to this implementation to avoid the need for the first assumption.
 
 ## How to run it?
 
