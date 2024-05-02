@@ -8,11 +8,9 @@ Consider a system composed of a fixed collection of processes which share a sing
 
 We wish to find an algorithm for granting the resource to a process which satisfies the following three conditions:
 
-(I) A process which has been granted the resource must release it before it can be granted to another process.
-
-(II) Different requests for the resource must be granted in the order in which they are made.
-
-(III) If every process which is granted the resource eventually releases it, then every request is eventually granted.
+1. A process which has been granted the resource must release it before it can be granted to another process.
+2. Different requests for the resource must be granted in the order in which they are made.
+3. If every process which is granted the resource eventually releases it, then every request is eventually granted.
 
 ## How to run it?
 
