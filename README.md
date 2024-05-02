@@ -1,5 +1,7 @@
 # logical-clocks
 
+This algorithm solves a mutual exclusion problem using an approach from [Time, Clocks, and the Ordering of Events in a Distributed System](https://lamport.azurewebsites.net/pubs/time-clocks.pdf), a paper by Leslie Lamport.
+
 ## What does it do?
 
 ```
