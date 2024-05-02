@@ -2,6 +2,19 @@
 
 ## What does it do?
 
+```
+Thread 0 received ACK from 1 at 4
+Thread 0 received ACK from 2 at 5
+  Resource was granted to thread 0 at 5
+  Resource was released from thread 0 at 6
+Thread 1 received RELEASE from 0 at 7
+  Resource was granted to thread 1 at 7
+Thread 0 sent RELEASE to 1 at 6
+Thread 0 sent RELEASE to 2 at 6
+Thread 2 received RELEASE from 0 at 7
+  Resource was released from thread 1 at 8
+```
+
 ## How to run it?
 
 ```
