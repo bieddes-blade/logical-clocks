@@ -4,8 +4,8 @@
 
 ```
 Thread 0 sent REQUEST to 2 at 0
-Thread 0 received REQUEST from 1 at 2
 Thread 2 sent REQUEST to 1 at 0
+Thread 0 received REQUEST from 1 at 2
 Thread 2 received REQUEST from 0 at 2
 ...
 Thread 0 received ACK from 1 at 5
