@@ -16,6 +16,7 @@ We wish to find an algorithm for granting the resource to a process which satisf
 
 ```
 g++ -std=c++17 threads.cpp -o threads
+./threads
 ```
 
 ## How to read the output?
