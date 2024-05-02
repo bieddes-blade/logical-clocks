@@ -21,7 +21,9 @@ g++ -std=c++17 threads.cpp -o threads
 
 ## How to read the output?
 
-The threads send three types of messages to each other: REQUEST, RELEASE and ACK. The last number in each event description is the timestamp of that event. These timestamps and a rule for breaking ties are enough to create a total ordering of events in the system. Each thread maintains its own logical clock and updates its value after certain events, such as sending all other threads a message (```++clock```) or receiveing a message from another thread (```clock = max(clock + 1, message.timestamp + 1)```).
+The threads send three types of messages to each other: REQUEST, RELEASE and ACK. The last number in each event description is the timestamp of that event. These timestamps and a rule for breaking ties are enough to create a total ordering of events in the system. Each thread maintains its own logical clock and updates its value after certain events, such as sending all other threads a message (```++clock```) or receiving a message from another thread (```clock = max(clock + 1, message.timestamp + 1)```).
+
+ACK messages are sent in response to REQUEST messages, so that the sender thread would be able to know when all other threads have received its resource request.
 
 ```
 Thread 0 sent REQUEST to 2 at 0
