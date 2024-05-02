@@ -12,6 +12,10 @@ We wish to find an algorithm for granting the resource to a process which satisf
 2. Different requests for the resource must be granted in the order in which they are made.
 3. If every process which is granted the resource eventually releases it, then every request is eventually granted.
 
+## Algorithm
+
+
+
 ## How to run it?
 
 ```
@@ -20,8 +24,6 @@ g++ -std=c++17 threads.cpp -o threads
 ```
 
 ## How to read the output?
-
-Used a safe queue class from this repository https://github.com/K-Adam/SafeQueue/tree/master
 
 ```
 Thread 0 sent REQUEST to 2 at 0
@@ -35,3 +37,7 @@ Thread 0 received ACK from 1 at 5
 Thread 0 sent RELEASE to 1 at 6
 Thread 1 received RELEASE from 0 at 7
 ```
+
+## Acknowledgements
+
+The message queue is based on a thread-safe queue class from this repository: https://github.com/K-Adam/SafeQueue/tree/master
