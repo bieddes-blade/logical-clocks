@@ -4,7 +4,9 @@
 
 ## How to run it?
 
-```g++ -std=c++17 threads.cpp -o threads```
+```
+g++ -std=c++17 threads.cpp -o threads
+```
 
 ## Algorithm
 
