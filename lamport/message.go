@@ -2,7 +2,7 @@ package lamport
 
 import "fmt"
 
-// Kind is the type of a message. The paper names three.
+// Kind is the type of a message: request, release, or ack.
 type Kind uint8
 
 const (
@@ -13,13 +13,9 @@ const (
 	// Ack is the acknowledgment rule 2 sends back to a requester.
 	//
 	// An acknowledgment carries no information beyond its own timestamp. It
-	// exists for one reason: to make condition (ii) of rule 5 satisfiable. A
-	// silent process never sends the requester anything later than Tm, so
-	// without it a request could wait forever and condition III would fail.
-	//
-	// Because that is its only job, rule 2's footnote allows it to be skipped
-	// whenever the responder has already sent the requester a late enough
-	// message. The obligation is discharged either way.
+	// exists to make condition (ii) of rule 5 satisfiable. A silent process
+	// never sends the requester anything later than Tm, so without it a
+	// request could wait forever and condition III would fail.
 	Ack
 )
 
@@ -35,20 +31,18 @@ func (k Kind) String() string {
 	return fmt.Sprintf("Kind(%d)", uint8(k))
 }
 
-// Message is one message in flight between two processes.
+// Message has a Sent timestamp field.
 //
-// Sent is the timestamp of the event that sent the message, which is rule
-// IR2(a). Two things follow from the "one rule, one event" convention:
+// For a Request, Sent is the Tm that identifies the request.
 //
-// For a Request, Sent is exactly the Tm that names the request. The request and
-// its timestamp are the same thing, so nothing else is needed to identify it.
+// For an Ack, Sent is the timestamp of the receive that triggered it. A process
+// advances its clock once when it takes a request off its inbox, then stamps the
+// acknowledgment it sends back with that same value instead of advancing again.
 //
-// For an Ack, Sent is the timestamp of the receive event that triggered it,
-// because rule 2 makes receiving the request and replying a single event.
-//
-// A Release deliberately carries no Tm. Rule 4 says to remove any request from
-// that process, and a process cannot request again until it has released, so at
-// most one of its requests is ever pending and "which one" cannot be ambiguous.
+// A Release carries no request timestamp. A process receiving one removes
+// whatever request it is currently holding from that sender. There is never
+// more than one to choose between, because a process cannot request the resource
+// again until it has released it.
 type Message struct {
 	Kind Kind
 	From ProcessID

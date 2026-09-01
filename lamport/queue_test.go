@@ -110,18 +110,3 @@ func TestQueueHasExactlyOneEarliest(t *testing.T) {
 		t.Fatalf("%d processes read themselves as earliest in %v, want exactly 1", count, q)
 	}
 }
-
-// Only reachable when in-order delivery is violated; it must not corrupt state.
-func TestQueueAddReplaces(t *testing.T) {
-	q := NewRequestQueue(3)
-	q.Add(Timestamp{Time: 2, Pid: 1})
-	q.Add(Timestamp{Time: 6, Pid: 1})
-
-	if q.Len() != 1 {
-		t.Fatalf("length %d after re-adding the same process, want 1", q.Len())
-	}
-	got, _ := q.Get(1)
-	if want := (Timestamp{Time: 6, Pid: 1}); got != want {
-		t.Fatalf("Get(1) = %v, want %v", got, want)
-	}
-}

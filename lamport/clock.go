@@ -2,8 +2,7 @@
 // Leslie Lamport's 1978 paper "Time, Clocks, and the Ordering of Events in a
 // Distributed System" (CACM 21(7), pp. 558-565).
 //
-// The package is meant to be read next to the paper. Where the code implements
-// a numbered rule, the comment names it.
+// The package is meant to be read next to the paper.
 package lamport
 
 import "fmt"
@@ -43,38 +42,16 @@ func (t Timestamp) Less(other Timestamp) bool {
 	return t.Pid.Beats(other.Pid)
 }
 
-// SatisfiedBy reports whether a message from peer carrying logical time u is
-// late enough to discharge peer's share of condition (ii) of rule 5, for a
-// request stamped t.
+// SatisfiedBy checks one peer against condition (ii) of rule 5.
 //
-// What condition (ii) guards against is an earlier request from a peer that has
-// not arrived yet. Condition (i) only says t is first among the requests this
-// process already holds. If it takes the resource and that earlier request turns
-// up afterwards, requests were not granted in the order they were made.
+// Rule 5(ii) says a process may take the resource only once it has received a
+// message timestamped later than its own request t from every other process.
+// This method answers that for a single peer; the caller runs it against each
+// peer in turn.
 //
-// What a message from peer tells the process: IR1 makes peer's own events
-// strictly increasing, so every event at peer before this message carries a time
-// below u. If peer had requested the resource below u, that request came first,
-// and rule 1 says peer broadcast it to everyone. Since messages between a pair
-// arrive in the order they were sent, that request arrived here first. So this
-// process already holds every request peer made below u, and the only ones it
-// could still be missing are stamped u or later. Hearing something recent from a
-// peer stands in for knowing everything old from it.
-//
-// The earliest request peer could still be hiding is one stamped exactly u. Let's
-// check whether a request from peer stamped u loses to t. If it does, every later
-// one does too, and nothing peer is still hiding can come before t.
-//
-// Unpacking that comparison gives the two cases:
-//
-//   - If t.Pid beats peer, a peer request at exactly t.Time loses to t, so
-//     u == t.Time is already enough.
-//   - Otherwise peer wins ties, so a peer request at exactly t.Time would win.
-//     Ruling it out needs u strictly above t.Time.
-//
-// The paper states rule 5(ii) as strictly later for every peer, which is also
-// correct, just more conservative: it makes a process keep waiting on a peer it
-// already beats on the tiebreak.
+// u is the highest logical time this process has seen in any message from peer.
+// The result says whether u is late enough to rule out peer still holding a
+// request that would come before t.
 func (t Timestamp) SatisfiedBy(u int, peer ProcessID) bool {
 	if t.Pid.Beats(peer) {
 		return u >= t.Time

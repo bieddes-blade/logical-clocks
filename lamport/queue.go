@@ -16,11 +16,10 @@ type entry struct {
 // currently pending, ordered by the total order on timestamps.
 //
 // The representation is a flat array indexed by process ID rather than a heap
-// or a sorted list, because of one bounding fact: a process cannot request the
-// resource again until it has released it, so the queue holds at most one entry
-// per process and can never exceed N. At that size a linear scan over
-// contiguous memory beats a tree or a heap outright, and it allocates nothing
-// after construction.
+// or a sorted list. A process cannot request the resource again until it has
+// released it, so the queue holds at most one entry per process and can never
+// exceed N. At that size a linear scan over contiguous memory is more efficient
+// than a tree or a heap, and it allocates nothing after construction.
 type RequestQueue struct {
 	entries []entry
 }
@@ -30,21 +29,14 @@ func NewRequestQueue(n int) *RequestQueue {
 	return &RequestQueue{entries: make([]entry, n)}
 }
 
-// Add records a pending request. Used by rule 1 for a process's own request and
-// by rule 2 for a request received from a peer.
-//
-// Add replaces any existing entry for the same process. Under the paper's
-// in-order delivery assumption that case never arises, since a release always
-// reaches a peer before the next request from the same sender. It can happen
-// only when in-order delivery is violated, which is exactly the failure the
-// out-of-order network is built to demonstrate.
+// Add records a pending request: a process's own request under rule 1, or one
+// received from a peer under rule 2.
 func (q *RequestQueue) Add(ts Timestamp) {
 	q.entries[ts.Pid] = entry{ts: ts, pending: true}
 }
 
 // Remove drops pid's pending request, if it has one. Used by rule 3 for a
-// process's own request and by rule 4 on receiving a release. It is a no-op
-// when there is nothing to remove.
+// process's own request and by rule 4 on receiving a release.
 func (q *RequestQueue) Remove(pid ProcessID) {
 	q.entries[pid] = entry{}
 }
