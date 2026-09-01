@@ -41,9 +41,9 @@ Every process keeps a **request queue** that no other process ever sees. It is a
 
 Condition (i) alone only says that a process is first among the requests it knows about. Condition (ii) is what adds that it knows about all of them:
 
-> Suppose a peer made a request stamped earlier than this one. By rule 1 the peer broadcast it here. By IR1, every message the peer sends afterwards carries a higher timestamp. Condition (ii) says a message from that peer stamped later than this request has arrived — so it was sent *after* the peer's request was. **Because messages between a pair arrive in the order they were sent, the peer's request must have arrived first.** So it is already in the queue, and condition (i) accounted for it.
+> Suppose a peer made a request stamped earlier than this one. By rule 1 the peer broadcast it here. By IR1, every message the peer sends afterwards carries a higher timestamp. Condition (ii) says a message from that peer stamped later than this request has arrived - so it was sent *after* the peer's request was. **Because messages between a pair arrive in the order they were sent, the peer's request must have arrived first.** So it is already in the queue, and condition (i) accounted for it.
 
-The acknowledgments in rule 2 exist only to make condition (ii) satisfiable — a silent peer would never send anything later, and a request would wait forever. That is also why an acknowledgment can be skipped whenever the responder has already sent the requester a late enough message: the obligation is met either way.
+The acknowledgments in rule 2 exist only to make condition (ii) satisfiable - a silent peer would never send anything later, and a request would wait forever. That is also why an acknowledgment can be skipped whenever the responder has already sent the requester a late enough message: the obligation is met either way.
 
 ## Assumptions
 
