@@ -1,4 +1,4 @@
-# logical-clocks
+# Logical clocks
 
 Leslie Lamport's distributed mutual exclusion algorithm in Go, from [Time, Clocks, and the Ordering of Events in a Distributed System](https://lamport.azurewebsites.net/pubs/time-clocks.pdf) (CACM 21(7), 1978).
 
