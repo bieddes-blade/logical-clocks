@@ -1,0 +1,8 @@
+# Compiled binaries and test binaries
+*.exe
+*.test
+/demo
+/logical-clocks
+
+# GoLand / IntelliJ project files
+.idea/

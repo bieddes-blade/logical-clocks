@@ -1,0 +1,4 @@
+# Store every text file with LF endings, on every platform.
+# Git for Windows defaults to core.autocrlf=true, which would otherwise commit
+# CRLF from this machine and hand LF to anyone on Linux or macOS.
+* text=auto eol=lf
