@@ -14,13 +14,6 @@ We wish to find an algorithm for granting the resource to a process which satisf
 
 We assume that for any two processes P<sub>i</sub> and P<sub>j</sub> , the messages sent from P<sub>i</sub> to P<sub>j</sub> are received in the same order as they are sent. Moreover, we assume that every message is eventually received. In the future, I will add a message backlog to this implementation to avoid the need for the first assumption.
 
-## How to run it?
-
-```
-g++ -std=c++17 threads.cpp -o threads
-./threads
-```
-
 ## How to read the output?
 
 The threads send three types of messages to each other: REQUEST, RELEASE and ACK. The last number in each event description is the timestamp of that event. These timestamps and a rule for breaking ties are enough to create a total ordering of events in the system. Each thread maintains its own logical clock and updates its value after certain events, such as sending all other threads a message (```++clock```) or receiving a message from another thread (```clock = max(clock + 1, message.timestamp + 1)```).
@@ -41,7 +34,3 @@ Thread 1 received RELEASE from 0 at 7
 ```
 
 The variable ```NUM_THREADS``` refers to the number of processes competing for the resource; the variable ```NUM_WRITES``` refers to the number of times these processes will try to update the value of the resource. The last line of the output should be a number equal to ```NUM_THREADS * NUM_WRITES```. In case of a race condition, a warning will be printed into the output.
-
-## Acknowledgements
-
-The message queue is based on a thread-safe queue class from this repository: https://github.com/K-Adam/SafeQueue/tree/master
