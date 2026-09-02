@@ -6,7 +6,7 @@ Leslie Lamport's distributed mutual exclusion algorithm in Go, from [Time, Clock
 
 Consider a system composed of a fixed collection of processes which share a single resource. Only one process should use the resource at a time, so the processes must synchronize themselves to avoid conflict.
 
-In this implementation, the processes are represented by goroutines that communicate only by message passing. The resource they contend for is a plain `int`, incremented by the goroutines without a mutex or an atomic. With only the algorithm protecting it, a break in mutual exclusion means two goroutines writing the same variable at once, and `go test -race` reports that.
+In this implementation, the processes are represented by goroutines that communicate only by message passing. The resource they contend for is a plain `int`, incremented by the goroutines without a mutex or an atomic. With only the algorithm protecting it, a break in mutual exclusion means two goroutines writing the same variable at once.
 
 A correct solution satisfies three conditions:
 
@@ -23,11 +23,11 @@ Each process keeps a counter and follows two rules:
 
 This gives the clock condition: if `a` happened before `b`, then `C(a) < C(b)`.
 
-Counters alone yield only a *partial* order, since two events at different processes can share a value. Pairing each counter with its process ID and breaking ties on that ID extends it to a total order.
+Counters alone yield only a *partial* order, since two events at different processes can share a timestamp. Pairing each counter with its process ID and breaking ties on that ID extends it to a total order.
 
 ## The algorithm
 
-Every process keeps a **request queue** that no other process ever sees. It is a local replica of the requests that process believes are pending, and the five rules keep the replicas consistent enough that all of them agree on which request is earliest.
+Every process keeps a **request queue** that no other process ever sees. It is a local replica of the requests that process believes are pending, and these five rules keep the replicas consistent enough that all of them agree on which request is earliest.
 
 1. **Request** - broadcast `Tm:Pi requests` to every process, and add it to your own queue.
 2. **On receiving a request** - add it to your queue and send back a timestamped acknowledgment.
